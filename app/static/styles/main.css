@@ -1,0 +1,8 @@
+.crud-form {
+    visibility: visible;
+    height: auto;
+}
+
+.crud-form-hidden {
+    display: none;
+}

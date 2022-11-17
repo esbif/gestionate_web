@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block app_content %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <p>Welcome to the gestionate tests analisys tool.</p> 
+            {% if summary %}
+            <p>{{ summary.size }} entries loaded. Containing data from
+            {{ summary.start }} to {{ summary.end }}.</p>
+            <p>{{ summary.failed_qty }} tests failed.</p>
+            <img class="img-responsive" src="{{url_for('static', filename='failed.png')}}" />
+            <p>{{ summary.succeeded_qty }} tests successfully executed.</p>
+            <p>Download:</p>
+            <img class="img-responsive" src="{{url_for('static', filename='dn_br.png')}}" />
+            <p>Upload:</p>
+            <img class="img-responsive" src="{{url_for('static', filename='up_br.png')}}" />
+            {% else %}
+            <p>No data loaded. Go to <a href="{{ url_for('main.data_loader') }}">Data Loader</a> to load data files. 
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-md-12">
+            {{ vsat.to_html(
+                    escape=False, 
+                    classes='table') | safe }} 
+        </div>
+    </div>
+{% endblock %}

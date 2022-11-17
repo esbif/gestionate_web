@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-md-12">
+            <p>Download: </p>
+            <img class="img-responsive" src="{{url_for('static', filename='vsat_dn_br.png')}}" />
+            <p>Upload: </p>
+            <img class="img-responsive" src="{{url_for('static', filename='vsat_up_br.png')}}" />
+        </div>
+    </div>
+{% endblock %}
