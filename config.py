@@ -9,4 +9,4 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     GRAPH_FOLDER = os.path.join(basedir, "app", "static")
-
+    REPORT_FOLDER = os.path.join(basedir, "app", "reports")

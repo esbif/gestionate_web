@@ -8,8 +8,9 @@ from app.main import bp
 from flask import render_template, url_for, session, flash, redirect
 from flask import session, current_app
 from flask_login import login_required, current_user
-from app.main.forms import DataForm
+from app.main.forms import DataForm, FilterForm, ComplianceForm
 from app.main.reporter import build_reporter_from_gestionate
+from app.main.reporter import get_compliance_report
 from app.main.grapher import Grapher
 from app import db
 
@@ -26,6 +27,9 @@ def index():
         reporter = build_reporter_from_gestionate(test_data)
         reporter.filter_sites(sites)
         reporter.eval_tests()
+
+        if "filters" in session.keys():
+            reporter.apply_filters(session["filters"])
 
         summary = reporter.get_summary()
 
@@ -48,6 +52,16 @@ def index():
                 'index.html', title='Home', summary=summary)
 
     return render_template('index.html', title='Home')
+
+@bp.route('/filters', methods=['POST','GET'])
+@login_required
+def filters():
+    form = FilterForm()
+    if form.validate_on_submit():
+        session["filters"] = {"profile_id": form.profile.data}
+        return redirect(url_for("main.index"))
+    return render_template(
+            'filters.html', title='Filters', form=form)
 
 @bp.route('/data_loader', methods=['POST','GET'])
 @login_required
@@ -73,6 +87,7 @@ def data_loader():
         test_data = pd.concat([op_data, non_op_data],
                 ignore_index = True, axis=0)
         test_data.reset_index()
+
         pkl_path = "data_sets/" + timestamp + ".pkl"
         test_data.to_pickle(pkl_path)
         session["data_pkl_path"] =  pkl_path
@@ -95,6 +110,8 @@ def progress():
         reporter = build_reporter_from_gestionate(test_data)
         reporter.filter_sites(sites)
         reporter.eval_tests()
+        if "filters" in session.keys():
+            reporter.apply_filters(session["filters"])
 
         # Get relevant data.
         progress = reporter.get_progress()
@@ -108,12 +125,77 @@ def progress():
     return render_template(
             "table.html", title="Progress", data=progress)
 
-#@bp.route("/compliance", methods=["GET"])
-#@login_required
-#def compliance():
-#    data = []
-#    return render_template(
-#            "compliance.html", title="Compliance", data=data)
+@bp.route("/compliance", methods=["GET", "POST"])
+@login_required
+def compliance():
+    form = ComplianceForm()
+    if form.validate_on_submit():
+        
+        timestamp = datetime.strftime(datetime.now(), "%d%m%y_%H%M%S")
+
+        op_filename = secure_filename("C_op_" + timestamp + ".xlsx")
+        non_op_filename = secure_filename(
+                "C_non_op_" + timestamp + ".xlsx")
+        tickets_filename = secure_filename(
+                "C_loc_" + timestamp + ".xlsx")
+
+        form.op_file.data.save("uploads/" + op_filename)
+        form.non_op_file.data.save("uploads/" + non_op_filename)
+        form.tickets_file.data.save("uploads/" + tickets_filename)
+
+        op_data = pd.read_excel(
+                "uploads/" + op_filename, sheet_name=0,
+                header=1, parse_dates=True)
+        non_op_data = pd.read_excel(
+                "uploads/" + non_op_filename, sheet_name=0,
+                header=1, parse_dates=True)
+        tickets_data = pd.read_excel(
+                "uploads/" + tickets_filename , sheet_name=0,
+                header=0, parse_dates=True)
+
+        test_data = pd.concat([op_data, non_op_data],
+                ignore_index = True, axis=0)
+        test_data.reset_index()
+
+        pkl_path = "data_sets/" + timestamp + ".pkl"
+        test_data.to_pickle(pkl_path)
+        sites = pd.read_pickle("data_sets/locations.pkl")
+        reporter = build_reporter_from_gestionate(test_data)
+        reporter.filter_sites(sites)
+        print("################## esto es despues de filtrar locations")
+        print(reporter.filtered)
+
+        filtered_data = reporter.filtered[
+                reporter.filtered["res"]=="succeeded"]
+        print("################## esto es despues de filtrar succeeded")
+        print(filtered_data)
+
+        remove_list = form.remove_vsats.data.split(",")
+        for item in remove_list:
+            filtered_data = filtered_data[
+                filtered_data["site"] != item.strip()]
+        print("################## esto es despues de filtrar rmv ids")
+        print(filtered_data)
+
+        type_filter = []
+        if form.scheduled.data:
+            type_filter.append("scheduled")
+        if form.on_demand.data:
+            type_filter.append("on-demand")
+        if form.monitoring.data:
+            type_filter.append("monitoring")
+
+        filtered_data = filtered_data[
+                filtered_data["type"].isin(type_filter)]
+        print("########## esto es despues de filtrar type")
+        print(filtered_data)
+
+        get_compliance_report(filtered_data, tickets_data)
+
+        return redirect(url_for("main.index"))
+
+    return render_template(
+            "compliance.html", title="Compliance", form=form)
 
 @bp.route('/vsat', methods=["GET"])
 @bp.route('/vsat/<vsat_id>', methods=["GET"])
@@ -129,6 +211,8 @@ def vsat(vsat_id=None):
         reporter = build_reporter_from_gestionate(test_data)
         reporter.filter_sites(sites)
         reporter.eval_tests()
+        if "filters" in session.keys():
+            reporter.apply_filters(session["filters"])
 
         if vsat_id:
             data = reporter.evaluated[
@@ -173,6 +257,8 @@ def day(date):
         reporter = build_reporter_from_gestionate(test_data)
         reporter.filter_sites(sites)
         reporter.eval_tests()
+        if "filters" in session.keys():
+            reporter.apply_filters(session["filters"])
         
         selected_date = datetime.strptime(date, "%Y-%m-%d")
         data = reporter.evaluated[
@@ -193,3 +279,4 @@ def day(date):
         return render_template("day_graph.html")
 
     return redirect(url_for("main.index"))
+
