@@ -6,7 +6,7 @@ import os
 
 from app.main import bp
 from flask import render_template, url_for, session, flash, redirect
-from flask import session, current_app
+from flask import session, current_app, send_file
 from flask_login import login_required, current_user
 from app.main.forms import DataForm, FilterForm, ComplianceForm
 from app.main.reporter import build_reporter_from_gestionate
@@ -122,8 +122,9 @@ def progress():
         progress["timestamp"] = progress["timestamp"].dt.date.apply(
                 lambda x: link.format(urllib.parse.quote_plus(
                         x.strftime("%Y-%m-%d"))))
-    return render_template(
-            "table.html", title="Progress", data=progress)
+        return render_template(
+                "table.html", title="Progress", data=progress)
+    return redirect(url_for("main.index"))
 
 @bp.route("/compliance", methods=["GET", "POST"])
 @login_required
@@ -192,7 +193,7 @@ def compliance():
 
         cmpl_file_path = get_compliance_report(filtered_data, tickets_data)
 
-        return send_file(cmpl_file_path)
+        return send_file(cmpl_file_path, as_attachment=True)
         #return redirect(url_for("main.index"))
 
     return render_template(
