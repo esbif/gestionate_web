@@ -190,9 +190,10 @@ def compliance():
         print("########## esto es despues de filtrar type")
         print(filtered_data)
 
-        get_compliance_report(filtered_data, tickets_data)
+        cmpl_file_path = get_compliance_report(filtered_data, tickets_data)
 
-        return redirect(url_for("main.index"))
+        return send_file(cmpl_file_path)
+        #return redirect(url_for("main.index"))
 
     return render_template(
             "compliance.html", title="Compliance", form=form)
