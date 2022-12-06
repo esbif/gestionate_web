@@ -188,8 +188,6 @@ def filter_test_qty_tkt(tests, tickets_tmp, min_test_qty, tkt_test_qty):
     """ Remove tests from sites with less than "min_test_qty" tests. 
     In case site has a ticket, use "tkt_test_qty". """
 
-    print(tickets_tmp.to_string())
-    print(tickets_tmp.dtypes.to_string())
     # Check interruption size. 
     tickets = pd.DataFrame()
     tickets['site'] = tickets_tmp['ID_BENEFICIARIO']
@@ -214,11 +212,10 @@ def filter_test_qty_tkt(tests, tickets_tmp, min_test_qty, tkt_test_qty):
     summary = pd.merge(test_qty, tickets, on="site", how="left")
     summary['dn_time_days'] = summary['dn_time_days'].fillna(0)
 
-    print(tests)
     profiles = pd.DataFrame()
     profiles["site"] = tests["site"]
     profiles["profile"] = tests["profile"]
-    profiles.drop_duplicates(['site', "profile"])
+    profiles = profiles.drop_duplicates(['site', "profile"])
     profiles["site"] = profiles.apply(
             lambda row: int(row.site.split("-")[0]), axis=1)
 
@@ -250,6 +247,7 @@ def filter_test_qty_tkt(tests, tickets_tmp, min_test_qty, tkt_test_qty):
     for site in invalid["site"].unique():
         tests = tests[tests["clean_loc"] != site]
 
+    print(summary)
     return tests, summary
 
 
