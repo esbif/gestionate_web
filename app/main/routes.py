@@ -58,7 +58,9 @@ def index():
 def filters():
     form = FilterForm()
     if form.validate_on_submit():
-        session["filters"] = {"profile_id": form.profile.data}
+        session["filters"] = {}
+        session["filters"].update({"profile_id": form.profile.data})
+        session["filters"].update({"type": form.test_type.data})
         return redirect(url_for("main.index"))
     return render_template(
             'filters.html', title='Filters', form=form)

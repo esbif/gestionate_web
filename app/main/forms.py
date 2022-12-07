@@ -14,6 +14,12 @@ class FilterForm(FlaskForm):
     profile = SelectField('Perfil', validators=[DataRequired()],
             choices=[(12, '12x3'),(15, '15x3.75'),(18, '18x4.5'),
                 (21, '21x5.25'), (None, 'All')])
+    test_type = SelectField('Tipo', validators=[DataRequired()],
+            choices=[
+                    ("scheduled", 'Scheduled'),
+                    ("monitoring", 'Monitoring'),
+                    ("on-demand", 'On Demand'), 
+                    (None, 'All')])
     submit = SubmitField('Filter')
 
 class ComplianceForm(FlaskForm):
